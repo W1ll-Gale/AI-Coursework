@@ -3,6 +3,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder, StandardScaler, PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.neural_network import MLPRegressor
 import numpy as np
 
 # Load the dataset
@@ -33,23 +34,54 @@ X_scaled = scaler.fit_transform(X)
 # Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
 
-# Transform features to polynomial features of degree 4
+# Linear Regression Model
+linear_model = LinearRegression()
+linear_model.fit(X_train, y_train)
+y_pred_linear = linear_model.predict(X_test)
+mae_linear = mean_absolute_error(y_test, y_pred_linear)
+mse_linear = mean_squared_error(y_test, y_pred_linear)
+rmse_linear = np.sqrt(mse_linear)
+
+print("Linear Regression Model:")
+print(f"MAE: {mae_linear}")
+print(f"MSE: {mse_linear}")
+print(f"RMSE: {rmse_linear}")
+
+# Polynomial Regression Model
 poly = PolynomialFeatures(degree=4)
 X_train_poly = poly.fit_transform(X_train)
 X_test_poly = poly.transform(X_test)
+poly_model = LinearRegression()
+poly_model.fit(X_train_poly, y_train)
+y_pred_poly = poly_model.predict(X_test_poly)
+mae_poly = mean_absolute_error(y_test, y_pred_poly)
+mse_poly = mean_squared_error(y_test, y_pred_poly)
+rmse_poly = np.sqrt(mse_poly)
 
-# Train the polynomial regression model
-model = LinearRegression()
-model.fit(X_train_poly, y_train)
+print("Polynomial Regression Model:")
+print(f"MAE: {mae_poly}")
+print(f"MSE: {mse_poly}")
+print(f"RMSE: {rmse_poly}")
 
-# Predict on the test set
-y_pred = model.predict(X_test_poly)
+# Neural Network Model
+nn_model = MLPRegressor(hidden_layer_sizes=(100,), activation='relu', solver='adam', max_iter=1000, random_state=42)
+nn_model.fit(X_train, y_train)
+y_pred_nn = nn_model.predict(X_test)
+mae_nn = mean_absolute_error(y_test, y_pred_nn)
+mse_nn = mean_squared_error(y_test, y_pred_nn)
+rmse_nn = np.sqrt(mse_nn)
 
-# Evaluate the model
-mae = mean_absolute_error(y_test, y_pred)
-mse = mean_squared_error(y_test, y_pred)
-rmse = np.sqrt(mse)
+print("Neural Network Model:")
+print(f"MAE: {mae_nn}")
+print(f"MSE: {mse_nn}")
+print(f"RMSE: {rmse_nn}")
 
-print(f"MAE: {mae}")
-print(f"MSE: {mse}")
-print(f"RMSE: {rmse}")
+# Analysis and Summary
+print("\nAnalysis and Summary:")
+print(f"Linear Regression - MAE: {mae_linear}, MSE: {mse_linear}, RMSE: {rmse_linear}")
+print(f"Polynomial Regression - MAE: {mae_poly}, MSE: {mse_poly}, RMSE: {rmse_poly}")
+print(f"Neural Network - MAE: {mae_nn}, MSE: {mse_nn}, RMSE: {rmse_nn}")
+
+# Compare and document the performance of the three models
+# Highlight which model delivered the best results and which one was the least effective
+# Consider factors such as underfitting and overfitting
