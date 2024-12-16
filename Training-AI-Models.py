@@ -5,6 +5,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.neural_network import MLPRegressor
 import numpy as np
+import joblib
 
 # Load the dataset
 data = pd.read_csv('traversal_cost_data.csv')
@@ -82,6 +83,28 @@ print(f"Linear Regression - MAE: {mae_linear}, MSE: {mse_linear}, RMSE: {rmse_li
 print(f"Polynomial Regression - MAE: {mae_poly}, MSE: {mse_poly}, RMSE: {rmse_poly}")
 print(f"Neural Network - MAE: {mae_nn}, MSE: {mse_nn}, RMSE: {rmse_nn}")
 
-# Compare and document the performance of the three models
-# Highlight which model delivered the best results and which one was the least effective
-# Consider factors such as underfitting and overfitting
+# Save the best model based on the smallest MSE
+best_model = None
+best_model_name = ""
+best_mse = float('inf')
+
+if mse_linear < best_mse:
+    best_mse = mse_linear
+    best_model = linear_model
+    best_model_name = "linear_model"
+
+if mse_poly < best_mse:
+    best_mse = mse_poly
+    best_model = poly_model
+    best_model_name = "poly_model"
+    joblib.dump(poly, 'poly.pkl')  # Save the polynomial features transformer
+
+if mse_nn < best_mse:
+    best_mse = mse_nn
+    best_model = nn_model
+    best_model_name = "nn_model"
+
+joblib.dump(best_model, f'{best_model_name}.pkl')
+joblib.dump(scaler, 'scaler.pkl')
+
+print(f"\nBest model: {best_model_name} with MSE: {best_mse}")
