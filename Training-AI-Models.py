@@ -6,6 +6,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.neural_network import MLPRegressor
 import numpy as np
 import joblib
+import matplotlib.pyplot as plt
 
 # Load the dataset
 data = pd.read_csv('traversal_cost_data.csv')
@@ -42,11 +43,13 @@ y_pred_linear = linear_model.predict(X_test)
 mae_linear = mean_absolute_error(y_test, y_pred_linear)
 mse_linear = mean_squared_error(y_test, y_pred_linear)
 rmse_linear = np.sqrt(mse_linear)
+percent_error_linear = np.mean(np.abs((y_test - y_pred_linear) / y_test)) * 100
 
 print("Linear Regression Model:")
 print(f"MAE: {mae_linear}")
 print(f"MSE: {mse_linear}")
 print(f"RMSE: {rmse_linear}")
+print(f"Percentage Error: {percent_error_linear:.2f}%")
 
 # Polynomial Regression Model
 poly = PolynomialFeatures(degree=4)
@@ -58,30 +61,34 @@ y_pred_poly = poly_model.predict(X_test_poly)
 mae_poly = mean_absolute_error(y_test, y_pred_poly)
 mse_poly = mean_squared_error(y_test, y_pred_poly)
 rmse_poly = np.sqrt(mse_poly)
+percent_error_poly = np.mean(np.abs((y_test - y_pred_poly) / y_test)) * 100
 
 print("Polynomial Regression Model:")
 print(f"MAE: {mae_poly}")
 print(f"MSE: {mse_poly}")
 print(f"RMSE: {rmse_poly}")
+print(f"Percentage Error: {percent_error_poly:.2f}%")
 
 # Neural Network Model
-nn_model = MLPRegressor(hidden_layer_sizes=(100,), activation='relu', solver='adam', max_iter=1000, random_state=42)
+nn_model = MLPRegressor(hidden_layer_sizes=(100,), activation='relu', solver='adam', max_iter=2000, learning_rate_init=0.001, random_state=42)
 nn_model.fit(X_train, y_train)
 y_pred_nn = nn_model.predict(X_test)
 mae_nn = mean_absolute_error(y_test, y_pred_nn)
 mse_nn = mean_squared_error(y_test, y_pred_nn)
 rmse_nn = np.sqrt(mse_nn)
+percent_error_nn = np.mean(np.abs((y_test - y_pred_nn) / y_test)) * 100
 
 print("Neural Network Model:")
 print(f"MAE: {mae_nn}")
 print(f"MSE: {mse_nn}")
 print(f"RMSE: {rmse_nn}")
+print(f"Percentage Error: {percent_error_nn:.2f}%")
 
 # Analysis and Summary
 print("\nAnalysis and Summary:")
-print(f"Linear Regression - MAE: {mae_linear}, MSE: {mse_linear}, RMSE: {rmse_linear}")
-print(f"Polynomial Regression - MAE: {mae_poly}, MSE: {mse_poly}, RMSE: {rmse_poly}")
-print(f"Neural Network - MAE: {mae_nn}, MSE: {mse_nn}, RMSE: {rmse_nn}")
+print(f"Linear Regression - MAE: {mae_linear}, MSE: {mse_linear}, RMSE: {rmse_linear}, Percentage Error: {percent_error_linear:.2f}%")
+print(f"Polynomial Regression - MAE: {mae_poly}, MSE: {mse_poly}, RMSE: {rmse_poly}, Percentage Error: {percent_error_poly:.2f}%")
+print(f"Neural Network - MAE: {mae_nn}, MSE: {mse_nn}, RMSE: {rmse_nn}, Percentage Error: {percent_error_nn:.2f}%")
 
 # Save the best model based on the smallest MSE
 best_model = None
@@ -108,3 +115,33 @@ joblib.dump(best_model, f'{best_model_name}.pkl')
 joblib.dump(scaler, 'scaler.pkl')
 
 print(f"\nBest model: {best_model_name} with MSE: {best_mse}")
+
+# Plotting the results
+plt.figure(figsize=(18, 6))
+
+# Linear Regression Plot
+plt.subplot(1, 3, 1)
+plt.scatter(y_test, y_pred_linear, alpha=0.5)
+plt.plot([y.min(), y.max()], [y.min(), y.max()], 'k--', lw=2)
+plt.xlabel('Actual')
+plt.ylabel('Predicted')
+plt.title('Linear Regression')
+
+# Polynomial Regression Plot
+plt.subplot(1, 3, 2)
+plt.scatter(y_test, y_pred_poly, alpha=0.5)
+plt.plot([y.min(), y.max()], [y.min(), y.max()], 'k--', lw=2)
+plt.xlabel('Actual')
+plt.ylabel('Predicted')
+plt.title('Polynomial Regression')
+
+# Neural Network Plot
+plt.subplot(1, 3, 3)
+plt.scatter(y_test, y_pred_nn, alpha=0.5)
+plt.plot([y.min(), y.max()], [y.min(), y.max()], 'k--', lw=2)
+plt.xlabel('Actual')
+plt.ylabel('Predicted')
+plt.title('Neural Network')
+
+plt.tight_layout()
+plt.show()
