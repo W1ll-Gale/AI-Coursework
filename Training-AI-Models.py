@@ -29,20 +29,12 @@ def load_and_preprocess_data(filepath):
 
 def analyze_target_variable(y):
     
-    y_min = y.min()
-    y_max = y.max()
-    y_mean = y.mean()
-    y_std = y.std()
-    y_range = y_max - y_min
+    y_series = pd.Series(y)
 
     print("\nTarget Variable (traversal_cost) Analysis:")
-    print(f"Min: {y_min:.2f}")
-    print(f"Max: {y_max:.2f}")
-    print(f"Mean: {y_mean:.2f}")
-    print(f"Std: {y_std:.2f}")
-    print(f"Range: {y_range:.2f}")
+    print(f"{y_series.describe()}")
 
-    return y_range
+    return y_series.max() - y_series.min()
 
 def train_and_evaluate_models(X_train, X_test, y_train, y_test, y_range):
     results = {}
@@ -59,6 +51,10 @@ def linear_regression(X_train, y_train, X_test, y_test):
     linear_model = LinearRegression()
     linear_model.fit(X_train, y_train)
     y_pred_linear = linear_model.predict(X_test)
+    y_pred_linear_series = pd.Series(y_pred_linear)
+    
+    print("Linear Regression Predictions:")
+    print(y_pred_linear_series.describe())
     mae_linear = mean_absolute_error(y_test, y_pred_linear)
     mse_linear = mean_squared_error(y_test, y_pred_linear)
     rmse_linear = np.sqrt(mse_linear)
@@ -87,6 +83,11 @@ def polynomial_regression(X_train, y_train, X_test, y_test):
     poly_model = LinearRegression()
     poly_model.fit(X_train_poly, y_train)
     y_pred_poly = poly_model.predict(X_test_poly)
+
+    y_pred_poly_series = pd.Series(y_pred_poly)
+    
+    print("Poly Regression Predictions:")
+    print(y_pred_poly_series.describe())
     mae_poly = mean_absolute_error(y_test, y_pred_poly)
     mse_poly = mean_squared_error(y_test, y_pred_poly)
     rmse_poly = np.sqrt(mse_poly)
@@ -113,6 +114,10 @@ def neural_network_model(X_train, y_train, X_test, y_test):
     nn_model = MLPRegressor(hidden_layer_sizes=(100,), activation='relu', solver='adam', max_iter=2000, learning_rate_init=0.001, random_state=42)
     nn_model.fit(X_train, y_train)
     y_pred_nn = nn_model.predict(X_test)
+    y_pred_nn_series = pd.Series(y_pred_nn)
+    
+    print("NN Regression Predictions:")
+    print(y_pred_nn_series.describe())    
     mae_nn = mean_absolute_error(y_test, y_pred_nn)
     mse_nn = mean_squared_error(y_test, y_pred_nn)
     rmse_nn = np.sqrt(mse_nn)
@@ -201,7 +206,7 @@ def main():
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=0)
 
     results = train_and_evaluate_models(X_train, X_test, y_train, y_test, y_range)
 
