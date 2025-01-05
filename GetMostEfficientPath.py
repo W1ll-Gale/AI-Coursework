@@ -5,6 +5,7 @@ import heapq
 from collections import deque
 import time
 import os
+import matplotlib.pyplot as plt
 from sklearn.preprocessing import OneHotEncoder
 
 def load_models():
@@ -22,33 +23,29 @@ def load_models():
 
 def estimate_traversal_costs(filepath, output_filepath):
     data = pd.read_csv(filepath)
+    if data.isnull().values.any():
+        print("Warning: NaN values found in the provided grid data")
+        print(data[data.isnull().any(axis=1)])
     scaler, poly, best_model = load_models()
 
-    # Identify non-numerical features
     non_numerical_features = ['type_of_terrain', 'zone_classification', 'time_of_day']
 
-    # Apply One-Hot Encoding to non-numerical features
     encoder = OneHotEncoder(sparse_output=False)
     encoded_features = encoder.fit_transform(data[non_numerical_features])
 
-    # Create a DataFrame with the encoded features
     encoded_df = pd.DataFrame(encoded_features, columns=encoder.get_feature_names_out(non_numerical_features))
 
-    # Drop the original non-numerical columns and concatenate the encoded features
     data = data.drop(non_numerical_features, axis=1)
     data = pd.concat([data, encoded_df], axis=1)
 
-    # Standardize the features
     X_scaled = scaler.transform(data)
 
-    # Predict using the best model
     if poly:
         X_poly = poly.transform(X_scaled)
         y_pred = best_model.predict(X_poly)
     else:
         y_pred = best_model.predict(X_scaled)
 
-    # Save predictions to file
     data['estimated_traversal_cost'] = y_pred
     data.to_csv(output_filepath, index=False)
 
@@ -127,7 +124,7 @@ def a_star(grid, start, end):
     directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
     nodes_explored = 0
 
-    def heuristic(cell, end, scale=2): # 'scale' is the average cost multiplier.
+    def heuristic(cell, end, scale=2): 
         return scale * (abs(cell[0] - end[0]) + abs(cell[1] - end[1]))
     
 
@@ -155,7 +152,7 @@ def a_star_optimized(grid, start, end, weight=1.5):
     nodes_explored = 0
 
     def heuristic(cell, end):
-        return weight * (abs(cell[0] - end[0]) + abs(cell[1] - end[1])) # Weighted Manhattan
+        return weight * (abs(cell[0] - end[0]) + abs(cell[1] - end[1])) 
 
     while open_set:
         _, current_cell = heapq.heappop(open_set)
@@ -174,50 +171,27 @@ def a_star_optimized(grid, start, end, weight=1.5):
     return float('inf'), nodes_explored
 
 def main():
-    # Estimate traversal costs for the provided grid data
+
     grid_filepath = 'provided_grid.csv'
     estimated_grid_filepath = 'Estimated_grid.csv'
     estimate_traversal_costs(grid_filepath, estimated_grid_filepath)
 
-    # Load the estimated grid data
     estimated_grid = pd.read_csv(estimated_grid_filepath)
 
-    # Debugging: Check for NaN values in the estimated grid data
-    if estimated_grid.isnull().values.any():
-        print("Warning: NaN values found in the estimated grid data before pivot.")
-        print(estimated_grid[estimated_grid.isnull().any(axis=1)])
+    print(estimated_grid['estimated_traversal_cost'].describe())
 
-    # Add row and column indices if not present
-    if 'row' not in estimated_grid.columns or 'col' not in estimated_grid.columns:
-        estimated_grid['row'] = estimated_grid.index // estimated_grid.shape[1]
-        estimated_grid['col'] = estimated_grid.index % estimated_grid.shape[1]
+    grid_size = int(np.sqrt(len(estimated_grid)))
+    grid = estimated_grid['estimated_traversal_cost'].values.reshape((grid_size, grid_size))
 
-    # Ensure all combinations of row and col indices are present
-    rows = estimated_grid['row'].max() + 1
-    cols = estimated_grid['col'].max() + 1
-    full_index = pd.MultiIndex.from_product([range(rows), range(cols)], names=['row', 'col'])
-    estimated_grid = estimated_grid.set_index(['row', 'col']).reindex(full_index).reset_index()
 
-    # Debugging: Check for NaN values after reindexing
-    if estimated_grid.isnull().values.any():
-        print("Warning: NaN values found in the estimated grid data after reindexing.")
-        print(estimated_grid[estimated_grid.isnull().any(axis=1)])
+    plt.imshow(grid, cmap='viridis', interpolation='nearest')
+    plt.colorbar(label='Traversal Cost')
+    plt.title('Traversal Costs in 20x20 Grid')
+    plt.show()
 
-    # Fill NaN values in 'estimated_traversal_cost' with the maximum traversal cost
-    max_traversal_cost = estimated_grid['estimated_traversal_cost'].max()
-    estimated_grid['estimated_traversal_cost'].fillna(max_traversal_cost, inplace=True)
+    start = (0, 0)  
+    end = (len(grid) - 1, len(grid[0]) - 1)  
 
-    grid = estimated_grid.pivot(index='row', columns='col', values='estimated_traversal_cost').values
-
-    # Debugging: Print the grid to ensure it's correctly formatted
-    print("Grid:")
-    print(grid)
-
-    # Define start and end points for pathfinding algorithms
-    start = (0, 0)  # Example start point
-    end = (len(grid) - 1, len(grid[0]) - 1)  # Example end point
-
-    # Find the most efficient delivery path using different algorithms
     start_time = time.perf_counter()
     shortest_path_cost_dijkstra, nodes_explored_dijkstra = dijkstra(grid, start, end)
     end_time = time.perf_counter()
